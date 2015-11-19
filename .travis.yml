@@ -1,0 +1,17 @@
+sudo: false
+
+language: go
+
+go:
+  - 1.5.1
+  - 1.5
+  - 1.4.1
+  - 1.4
+
+services:
+  - redis-server
+
+install:
+  - go get "gopkg.in/redis.v3"
+  - go test -cover
+  - go vet
