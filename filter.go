@@ -1,33 +1,33 @@
 package bloomis
 
 import (
-	"encoding/binary"
 	"fmt"
-	"hash"
-	"hash/crc64"
-	"hash/fnv"
 
 	"gopkg.in/redis.v3"
 )
 
 // Filter handles the bloom filter logic
 type Filter struct {
-	// name of the filter
-	name string
-	// h1 is the first hash function used to get the list of g1..gk values
-	h1 hash.Hash
-	// h2 is the second hash function used to get the list of g1..gk values
-	h2 hash.Hash
-	// m is the total number of bits of the bloom filter
-	m uint64
-	// k is the number of hash values
-	k uint64
+	// Name of the filter
+	Name string `json:"name"`
+	// hasher is a pointer to the struct containing the pair of hashing functions used to get the list of g1..gk values
+	hasher *hasher `json:"-"`
+	// M is the total number of bits of the bloom filter
+	M uint64 `json:"m"`
+	// K is the number of hash values
+	K uint64 `json:"k"`
+}
+
+var defaultFilterPrefix = "bloomis_f_"
+
+func prepareFilterKey(key string) string {
+	return fmt.Sprintf("%s_%s", defaultFilterPrefix, key)
 }
 
 // NewFilter creates a new Bloom filter with the given _name_ name, _m_ bits and _k_ hashing values
 // for the h1 function, it uses hash/fnv.New64() and, for h2, hash/crc64.New(crc64.MakeTable(crc64.ECMA))
 func NewFilter(name string, m, k uint64) Filter {
-	return Filter{name, fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), m, k}
+	return Filter{name, NewHasher(), m, k}
 }
 
 // Add adds a new _value_ value to the Bloom filter called _key_ over the _client_ redis connection
@@ -35,14 +35,15 @@ func (bf *Filter) Add(key string, value []byte, client *redis.Client) error {
 	return bf.AddMulti(key, [][]byte{value}, client)
 }
 
-// Add adds a set of _values_ values to the Bloom filter called _key_ over the _client_ redis connection
+// AddMulti adds a set of _values_ values to the Bloom filter called _key_ over the _client_ redis connection
 func (bf *Filter) AddMulti(key string, values [][]byte, client *redis.Client) error {
 	bitset := bf.bitset(values)
 
+	bloomisKey := prepareFilterKey(key)
 	multi := client.Multi()
 	_, err := multi.Exec(func() error {
 		for bit := range bitset {
-			multi.SetBit(key, bit, 1)
+			multi.SetBit(bloomisKey, bit, 1)
 		}
 		return nil
 	})
@@ -55,12 +56,13 @@ func (bf *Filter) Test(key string, value []byte, client *redis.Client) (bool, er
 	return bf.TestMulti(key, [][]byte{value}, client)
 }
 
-// Test tests if all _values_ values have been inserted into the Bloom filter called _key_ over the _client_ redis connection
+// TestMulti tests if all _values_ values have been inserted into the Bloom filter called _key_ over the _client_ redis connection
 func (bf *Filter) TestMulti(key string, values [][]byte, client *redis.Client) (bool, error) {
 	bitset := bf.bitset(values)
 
+	bloomisKey := prepareFilterKey(key)
 	for bit := range bitset {
-		cmd := client.GetBit(key, bit)
+		cmd := client.GetBit(bloomisKey, bit)
 		if cmd == nil {
 			return false, fmt.Errorf("Error getting the bit %d", bit)
 		}
@@ -83,16 +85,11 @@ func (bf *Filter) bitset(values [][]byte) map[int64]bool {
 }
 
 func (bf *Filter) bits(value []byte) []uint64 {
-	s := make([]uint64, 2)
-	for i, h := range []hash.Hash{bf.h1, bf.h2} {
-		h.Reset()
-		h.Write(value)
-		s[i] = binary.BigEndian.Uint64(h.Sum(nil))
-	}
+	s0, s1 := bf.hasher.getHashes(value, bf.M, bf.K)
 
-	b := make([]uint64, bf.k)
-	for i := uint64(0); i < bf.k; i++ {
-		b[i] = (s[0] + s[1]*uint64(i)) % bf.m
+	b := make([]uint64, bf.K)
+	for i := uint64(0); i < bf.K; i++ {
+		b[i] = (s0 + s1*uint64(i)) % bf.M
 	}
 	return b
 }
