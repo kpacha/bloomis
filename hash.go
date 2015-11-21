@@ -7,6 +7,10 @@ import (
 	"hash/fnv"
 )
 
+type Hasher interface {
+	GetHashes(value []byte) (uint64, uint64)
+}
+
 type hasher struct {
 	// h1 is the first hash function used to get the list of g1..gk values
 	h1 hash.Hash
@@ -14,11 +18,11 @@ type hasher struct {
 	h2 hash.Hash
 }
 
-func NewHasher() *hasher {
-	return &hasher{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA))}
+func NewBloomisHasher() Hasher {
+	return hasher{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA))}
 }
 
-func (this *hasher) getHashes(value []byte) (uint64, uint64) {
+func (this hasher) GetHashes(value []byte) (uint64, uint64) {
 	s := make([]uint64, 2)
 	for i, h := range []hash.Hash{this.h1, this.h2} {
 		h.Reset()

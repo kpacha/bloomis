@@ -1,9 +1,16 @@
 bloomis
 ====
 
-Distributed bloom filters for very large sets using redis as a persistence and consensus.
+Distributed bloom filters for very large sets using redis for persistence and consensus.
 
-Usage:
+## Goals:
+
++ Plugable as a module with a minimal, clean interface
++ Transparent for the client using the standard semantics for bloom filters
++ Agents can join and leave the distributed bloom filter anytime without effort
++ Minimal data transference over the network
+
+## Usage:
 
 Import the required libraries
 
@@ -45,3 +52,7 @@ Start adding and testing values
 ```
 
 Check the [bloom_test.go](https://github.com/kpacha/bloomis/blob/master/bloom_test.go) for more examples
+
+## Customization
+
+Since the `BloomFilter` is just a facade, you can create your custom filters with your own `Hasher` implementations and/or personalize how to store/load the filter metadata, etc.

@@ -11,7 +11,7 @@ type Filter struct {
 	// Name of the filter
 	Name string `json:"name"`
 	// hasher is a pointer to the struct containing the pair of hashing functions used to get the list of g1..gk values
-	hasher *hasher `json:"-"`
+	hasher *Hasher `json:"-"`
 	// M is the total number of bits of the bloom filter
 	M uint64 `json:"m"`
 	// K is the number of hash values
@@ -27,7 +27,8 @@ func prepareFilterKey(key string) string {
 // NewFilter creates a new Bloom filter with the given _name_ name, _m_ bits and _k_ hashing values
 // for the h1 function, it uses hash/fnv.New64() and, for h2, hash/crc64.New(crc64.MakeTable(crc64.ECMA))
 func NewFilter(name string, m, k uint64) Filter {
-	return Filter{name, NewHasher(), m, k}
+	hasher := NewBloomisHasher()
+	return Filter{name, &hasher, m, k}
 }
 
 // Add adds a new _value_ value to the Bloom filter called _key_ over the _client_ redis connection
@@ -85,7 +86,7 @@ func (bf *Filter) bitset(values [][]byte) map[int64]bool {
 }
 
 func (bf *Filter) bits(value []byte) []uint64 {
-	s0, s1 := bf.hasher.getHashes(value)
+	s0, s1 := (*bf.hasher).GetHashes(value)
 
 	b := make([]uint64, bf.K)
 	for i := uint64(0); i < bf.K; i++ {
