@@ -85,7 +85,7 @@ func (bf *Filter) bitset(values [][]byte) map[int64]bool {
 }
 
 func (bf *Filter) bits(value []byte) []uint64 {
-	s0, s1 := bf.hasher.getHashes(value, bf.M, bf.K)
+	s0, s1 := bf.hasher.getHashes(value)
 
 	b := make([]uint64, bf.K)
 	for i := uint64(0); i < bf.K; i++ {

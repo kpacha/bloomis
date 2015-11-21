@@ -18,7 +18,7 @@ func NewHasher() *hasher {
 	return &hasher{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA))}
 }
 
-func (this *hasher) getHashes(value []byte, m, k uint64) (uint64, uint64) {
+func (this *hasher) getHashes(value []byte) (uint64, uint64) {
 	s := make([]uint64, 2)
 	for i, h := range []hash.Hash{this.h1, this.h2} {
 		h.Reset()
