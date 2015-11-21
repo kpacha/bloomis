@@ -12,6 +12,8 @@ import (
 
 // Filter handles the bloom filter logic
 type Filter struct {
+	// name of the filter
+	name string
 	// h1 is the first hash function used to get the list of g1..gk values
 	h1 hash.Hash
 	// h2 is the second hash function used to get the list of g1..gk values
@@ -22,11 +24,10 @@ type Filter struct {
 	k uint64
 }
 
-// NewFilter creates a new Bloom filter with _m_ bits and _k_ hashing values
-// for the h1 function, it uses hash/fnv.New64() and, for h2,
-// hash/crc64.New(crc64.MakeTable(crc64.ECMA))
-func NewFilter(m, k uint64) Filter {
-	return Filter{fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), m, k}
+// NewFilter creates a new Bloom filter with the given _name_ name, _m_ bits and _k_ hashing values
+// for the h1 function, it uses hash/fnv.New64() and, for h2, hash/crc64.New(crc64.MakeTable(crc64.ECMA))
+func NewFilter(name string, m, k uint64) Filter {
+	return Filter{name, fnv.New64(), crc64.New(crc64.MakeTable(crc64.ECMA)), m, k}
 }
 
 // Add adds a new _value_ value to the Bloom filter called _key_ over the _client_ redis connection

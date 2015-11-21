@@ -28,7 +28,7 @@ func New(client *redis.Client) *BloomFilter {
 // hash/crc64.New(crc64.MakeTable(crc64.ECMA))
 func NewSingleFilter(m, k uint64, client *redis.Client) *BloomFilter {
 	bf := New(client)
-	bf.Filter[defaultKey] = NewFilter(m, k)
+	bf.Filter[defaultKey] = NewFilter(defaultKey, m, k)
 	return bf
 }
 
