@@ -1,5 +1,4 @@
-bloomis
-====
+[![Build Status](https://travis-ci.org/kpacha/bloomis.svg?branch=master)](https://travis-ci.org/kpacha/bloomis)
 
 Distributed bloom filters for very large sets using redis for persistence and consensus.
 
@@ -53,7 +52,7 @@ Start adding and testing values
 
 Check the [bloom_test.go](https://github.com/kpacha/bloomis/blob/master/bloom_test.go) for more examples
 
-## Serious stuff
+## Max capacity:
 
 The max capacity of a single bloomis filter is defined by the max size of a string value in redis (512MB) - `m` - and the probability of false positives `p` selected. As seen before, it allows you to store more than 99M elements with `p = 1e-9`. It could be extended by sharding several bloom filters, so go ahead and use the bloomis filter with any consistent hashing lib like [go-jump](https://github.com/dgryski/go-jump) or with a naive hashing function like this one:
 
@@ -63,6 +62,6 @@ func NaiveHash(key string) string {
 }
 ```
 
-## Customization
+## Customization:
 
 Since the `BloomFilter` is just a proxy with a list of filters and a simple config persistence, you can create your custom filters with your own `Hasher` implementations and/or personalize how to store/load the filter metadata, etc.
