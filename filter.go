@@ -11,7 +11,7 @@ type Filter struct {
 	// Name of the filter
 	Name string `json:"name"`
 	// hasher is a pointer to the struct containing the pair of hashing functions used to get the list of g1..gk values
-	hasher *Hasher `json:"-"`
+	hasher *Hasher
 	// M is the total number of bits of the bloom filter
 	M uint64 `json:"m"`
 	// K is the number of hash values
